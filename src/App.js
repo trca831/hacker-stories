@@ -1,5 +1,24 @@
 import React from 'react';
 
+const initialStories = [
+  {
+    title: 'React',
+    url: 'https://reactjs.org/',
+    author: 'Jordan Walke',
+    num_comments: 3,
+    points: 4,
+    objectID: 0,
+}, 
+{
+    title: 'Redux',
+    url: 'https://redux.js.org/',
+    author: 'Dan Abramov, Andrew Clark',
+    num_comments: 2,
+    points: 5,
+    objectID: 1,
+}, 
+];
+
 const useSemiPersistentState = (key, initialState) => {
   const [value, setValue] = React.useState(
     localStorage.getItem(key) || initialState
@@ -15,29 +34,19 @@ const useSemiPersistentState = (key, initialState) => {
 
 const App = () => {
 
-  const stories = [
-    {
-      title: 'React',
-      url: 'https://reactjs.org/',
-      author: 'Jordan Walke',
-      num_comments: 3,
-      points: 4,
-      objectID: 0,
-  }, 
-  {
-      title: 'Redux',
-      url: 'https://redux.js.org/',
-      author: 'Dan Abramov, Andrew Clark',
-      num_comments: 2,
-      points: 5,
-      objectID: 1,
-  }, 
-  ];
-
   const [searchTerm, setSearchTerm] = useSemiPersistentState(
-    'search',
-    'React'
+    "search",
+    "React"
   );
+
+  const [stories, setStories] = React.useState(initialStories);
+
+  const handleRemoveStory = (item) => {
+    const newStories = stories.filter(
+      (story) => item.objectID !== story.objectID
+    );
+    setStories(newStories);
+  };
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
@@ -49,50 +58,93 @@ const App = () => {
 
   return (
     <div>
-      <h1> 
-        My Hacker Stories
-      </h1>
+      <h1> My Hacker Stories </h1>
 
-      <Search search={searchTerm} onSearch={handleSearch}/>
+      <InputWithLabel
+        id="search"
+        label="search"
+        value={searchTerm}
+        isFocused
+        onInputChange={handleSearch}
+      >
+        <strong>Search:</strong>
+        </InputWithLabel>
+
+      {/* <Search search={searchTerm} onSearch={handleSearch}/> */}
 
       <hr/>
       
-      <List list={searchedStories}/> {/* This is a React Component */}
+      <List list={searchedStories} onRemoveItem={handleRemoveStory}/> {/* This is a React Component */}
       
     </div>
-  )
-}
+  );
+};
 
-const Search = ({search, onSearch}) => (
+const InputWithLabel = ({
+  id, 
+  value, 
+  type = 'text',
+  onInputChange,
+  isFocused,
+  children,
+}) => {
+
+  const inputRef = React.useRef();
+
+  React.useEffect(() => {
+    if (isFocused && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isFocused]);
+
+  return (
+// const Search = ({search, onSearch}) => (
       <>
-        <label htmlFor="search"> Search: </label>
+        <label htmlFor={id}> {children} </label>
+        &nbsp;
         <input 
-          id="search" 
-          type="text" 
-          value={search}
-          onChange={onSearch}
+          ref={inputRef}
+          id={id} 
+          type={type} 
+          value={value}
+          onChange={onInputChange}
          />
     </>
   );
+  };
 
-
-const List = ({list}) => (
+const List = ({list, onRemoveItem}) => (
     <ul>
       {list.map(({objectID, ...item}) => (
-          <Item key={item.objectID} {...item}/>  
+          <Item 
+          key={item.objectID}
+          item= {item}
+          onRemoveItem={onRemoveItem}
+          />  
         ))} 
       </ul>
 );
 
-const Item = ({title, url, author, num_comments, points}) => (
+const Item = ({item, onRemoveItem}) => {
+  const handleRemoveItem = () => {
+    onRemoveItem(item);
+  };
+
+return (
     <li>
         <span>
-            <a href={url}>{title}</a>
+            <a href={item.url}>{item.title}</a>
         </span>
-            <span>{author}</span>
-            <span>{num_comments}</span>
-            <span>{points}</span>
+            <span>{item.author}</span>
+            <span>{item.num_comments}</span>
+            <span>{item.points}</span>
+            <span>
+              <button type="button" onClick={handleRemoveItem}>
+                Dismiss
+              </button>
+            </span>
     </li>
 );
 
+};
 export default App;
